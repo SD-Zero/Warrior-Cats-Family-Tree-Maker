@@ -157,8 +157,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
 
   const summaryLines = generateSummary(cat, cats, connections);
 
-  // Role line: rank only (gender + allegiance shown as separate pills)
-  const roleLabel = cat.rank ?? '';
+  const roleLabel = '';
 
   return (
     <div
@@ -267,26 +266,17 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#f5f5f5', margin: 0, lineHeight: 1.2 }}>
             {cat.name}
           </h1>
-          {(cat.gender || cat.allegiance) && (
+          {(cat.gender || cat.allegiance || cat.rank) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-              {cat.gender && (
-                <span style={{
+              {[cat.gender, cat.allegiance, cat.rank].filter(Boolean).map((val, i) => (
+                <span key={i} style={{
                   backgroundColor: '#1a1a1a', color: '#ababab',
                   border: '1px solid #2a2a2a', borderRadius: '6px',
                   padding: '3px 10px', fontSize: '12px', fontWeight: 600,
                 }}>
-                  {cat.gender}
+                  {val}
                 </span>
-              )}
-              {cat.allegiance && (
-                <span style={{
-                  backgroundColor: '#1a1a1a', color: '#ababab',
-                  border: '1px solid #2a2a2a', borderRadius: '6px',
-                  padding: '3px 10px', fontSize: '12px', fontWeight: 600,
-                }}>
-                  {cat.allegiance}
-                </span>
-              )}
+              ))}
             </div>
           )}
           {roleLabel && (
