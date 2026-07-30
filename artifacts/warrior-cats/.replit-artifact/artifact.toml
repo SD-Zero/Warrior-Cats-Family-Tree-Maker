@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Warrior Cats Family Tree"
+version = "1.0.0"
+id = "artifacts/warrior-cats"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24850
+
+[services.development]
+run = "pnpm --filter @workspace/warrior-cats run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/warrior-cats", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/warrior-cats/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24850"
+BASE_PATH = "/"
