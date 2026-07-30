@@ -112,7 +112,7 @@ export default function ShareModal({ cats, connections, onClose }: Props) {
                 Generate a view-only link to share your tree. Anyone with the link can browse it but not edit it — unless they have the edit code.
               </p>
 
-              <Field label="Title (optional)" value={title} onChange={setTitle} placeholder="e.g. ThunderClan family tree" />
+              <Field label="Title (optional)" value={title} onChange={setTitle} placeholder="ThunderClan family tree" />
               <Field label="Edit code (optional)" value={editCode} onChange={setEditCode} placeholder="Set a password to allow editing" type="password" />
 
               {editCode && (
