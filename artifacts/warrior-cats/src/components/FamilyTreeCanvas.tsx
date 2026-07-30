@@ -1,17 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface CatNode { id: string; name: string; x: number; y: number; }
-type RelationType = 'parent' | 'kit' | 'mate' | 'ex-mate';
-interface Connection { id: string; fromId: string; toId: string; type: RelationType; }
-interface Transform { x: number; y: number; scale: number; }
-interface KitModal {
-  forCatId: string;
-  newKitId: string;
-  mates: CatNode[];
-  exMates: CatNode[];
-}
+import { CatNode, Connection, RelationType, Transform, KitModal } from '../types';
+import EditModal from './EditModal';
+import KitParentModal from './KitParentModal';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -19,20 +9,15 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 4;
 const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 
-// ─── Heart SVG paths (tip always pointing DOWN, centered at 0,0) ──────────────
-// Full heart
+// ─── Heart SVG paths (tip pointing DOWN, centered at 0,0) ─────────────────────
 const HEART_PATH =
   'M 0,-4 C 0,-4 -1.3,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 1.3,-7 0,-4 0,-4 Z';
 
-// Broken heart — crack line: (0,-4) → (2,0) → (-2,2) → (0,6)
-// Left half: right edge follows the crack
-const BROKEN_LEFT =
-  'M 0,-4 C -1.3,-7 -4.5,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 L -2,2 L 2,0 Z';
-// Right half: left edge follows the crack
-const BROKEN_RIGHT =
-  'M 0,-4 L 2,0 L -2,2 L 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 4.5,-7 1.3,-7 0,-4 Z';
+// Broken heart — symmetric halves, crack: (0,-4)→(2,0)→(-2,2)→(0,6)
+const BROKEN_LEFT  = 'M 0,-4 C -1.3,-7 -4.5,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 L -2,2 L 2,0 Z';
+const BROKEN_RIGHT = 'M 0,-4 L 2,0 L -2,2 L 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 4.5,-7 1.3,-7 0,-4 Z';
 
-// ─── Snap helper ─────────────────────────────────────────────────────────────
+// ─── Snap helper ──────────────────────────────────────────────────────────────
 function snapTo(val: number, grid: number) {
   return grid > 0 ? Math.round(val / grid) * grid : val;
 }
@@ -44,8 +29,7 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
   const to   = cats.find((c) => c.id === conn.toId);
   if (!from || !to) return null;
 
-  const x1 = from.x, y1 = from.y;
-  const x2 = to.x,   y2 = to.y;
+  const x1 = from.x, y1 = from.y, x2 = to.x, y2 = to.y;
 
   if (conn.type === 'parent' || conn.type === 'kit') {
     const my = (y1 + y2) / 2;
@@ -53,12 +37,10 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
     return <path d={d} stroke="#6b7280" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
   }
 
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   const dist = Math.hypot(x2 - x1, y2 - y1);
   if (dist < 2) return null;
-  const ux = (x2 - x1) / dist;
-  const uy = (y2 - y1) / dist;
+  const ux = (x2 - x1) / dist, uy = (y2 - y1) / dist;
   const GAP = 10;
   const ax2 = mx - ux * GAP, ay2 = my - uy * GAP;
   const bx1 = mx + ux * GAP, by1 = my + uy * GAP;
@@ -68,7 +50,6 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
       <g>
         <line x1={x1} y1={y1} x2={ax2} y2={ay2} stroke="#f9a8d4" strokeWidth={2.5} strokeLinecap="round" />
         <line x1={bx1} y1={by1} x2={x2} y2={y2} stroke="#f9a8d4" strokeWidth={2.5} strokeLinecap="round" />
-        {/* Heart always upright — no rotation */}
         <g transform={`translate(${mx},${my})`}>
           <path d={HEART_PATH} fill="#f472b6" stroke="#ec4899" strokeWidth={0.5} />
         </g>
@@ -76,17 +57,14 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
     );
   }
 
-  // ex-mate: two halves pulled left/right symmetrically, both upright
   return (
     <g>
       <line x1={x1} y1={y1} x2={ax2} y2={ay2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
       <line x1={bx1} y1={by1} x2={x2} y2={y2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
       <g transform={`translate(${mx},${my})`}>
-        {/* Left half: shift left */}
         <g transform="translate(-2,0)">
           <path d={BROKEN_LEFT}  fill="#991b1b" stroke="#7f1d1d" strokeWidth={0.5} />
         </g>
-        {/* Right half: shift right */}
         <g transform="translate(2,0)">
           <path d={BROKEN_RIGHT} fill="#991b1b" stroke="#7f1d1d" strokeWidth={0.5} />
         </g>
@@ -121,7 +99,7 @@ function PopupBtn({
   );
 }
 
-function VerticalBtn({ label, onClick, testId }: { label: string; onClick?: () => void; testId?: string; }) {
+function VerticalBtn({ label, onClick, testId }: { label: string; onClick?: () => void; testId?: string }) {
   const [hov, setHov] = useState(false);
   return (
     <button
@@ -154,13 +132,14 @@ function DownArrow() {
   );
 }
 
-// ─── Grid Snap Toggle ─────────────────────────────────────────────────────────
+// ─── Snap Grid Toggle ─────────────────────────────────────────────────────────
 
 const SNAP_OPTIONS: { label: string; value: number }[] = [
-  { label: 'Off',    value: 0   },
-  { label: 'Fine',   value: 50  },
-  { label: 'Medium', value: 100 },
-  { label: 'Coarse', value: 200 },
+  { label: 'Off',   value: 0   },
+  { label: '25px',  value: 25  },
+  { label: '50px',  value: 50  },
+  { label: '100px', value: 100 },
+  { label: '200px', value: 200 },
 ];
 
 function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) => void }) {
@@ -168,16 +147,16 @@ function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) =>
     <div
       style={{
         position: 'fixed', top: '20px', left: '20px', zIndex: 1000,
-        display: 'flex', flexDirection: 'column', gap: '6px',
+        display: 'flex', flexDirection: 'column', gap: '5px',
       }}
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div style={{
-        fontSize: '10px', fontWeight: 600, color: '#6b7280',
+        fontSize: '10px', fontWeight: 600, color: '#4b5563',
         letterSpacing: '0.08em', textTransform: 'uppercase',
         marginBottom: '2px', paddingLeft: '2px',
       }}>
-        Snap Grid
+        Snap
       </div>
       {SNAP_OPTIONS.map((opt) => {
         const active = snap === opt.value;
@@ -187,178 +166,22 @@ function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) =>
             onClick={() => onChange(opt.value)}
             style={{
               fontSize: '12px', fontWeight: active ? 700 : 500,
-              padding: '6px 14px',
-              backgroundColor: active ? '#ffffff' : 'rgba(255,255,255,0.07)',
-              color: active ? '#111' : '#9ca3af',
-              border: active ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
+              padding: '5px 12px',
+              backgroundColor: active ? '#ffffff' : 'rgba(255,255,255,0.06)',
+              color: active ? '#111' : '#6b7280',
+              border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '7px',
               cursor: 'pointer',
-              textAlign: 'left',
+              textAlign: 'center',
               transition: 'all 0.12s',
               whiteSpace: 'nowrap',
-              minWidth: '80px',
+              minWidth: '62px',
             }}
           >
             {opt.label}
-            {opt.value > 0 && (
-              <span style={{ opacity: 0.55, fontWeight: 400, marginLeft: 6, fontSize: '11px' }}>
-                {opt.value}px
-              </span>
-            )}
           </button>
         );
       })}
-    </div>
-  );
-}
-
-// ─── Kit Parent Modal ─────────────────────────────────────────────────────────
-
-function KitParentModal({
-  modal, cats, onLink, onSkip,
-}: {
-  modal: KitModal;
-  cats: CatNode[];
-  onLink: (partnerId: string) => void;
-  onSkip: () => void;
-}) {
-  const self   = cats.find((c) => c.id === modal.forCatId);
-  const newKit = cats.find((c) => c.id === modal.newKitId);
-  const hasMate   = modal.mates.length > 0;
-  const hasExMate = modal.exMates.length > 0;
-
-  const selfName = self?.name   ?? 'Unknown';
-  const kitName  = newKit?.name ?? 'Unknown';
-
-  let title = '';
-  if (hasMate && hasExMate) title = 'Add kit to mate or ex-mate?';
-  else if (hasMate)         title = 'Add kit to mate?';
-  else                      title = 'Add kit to ex-mate?';
-
-  const partnerNames = [
-    ...modal.mates.map((m) => m.name),
-    ...modal.exMates.map((m) => m.name),
-  ];
-  const partnerDisplay = partnerNames.length === 2
-    ? `${partnerNames[0]} or ${partnerNames[1]}`
-    : partnerNames[0] ?? '';
-
-  const BG = '#111111';
-
-  return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 2000,
-        backgroundColor: 'rgba(0,0,0,0.82)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <div style={{
-        backgroundColor: BG,
-        border: '1px solid #2a2a2a',
-        borderRadius: '12px',
-        padding: '36px 44px 40px 44px',
-        maxWidth: '560px',
-        width: '90%',
-        boxShadow: '0 12px 60px rgba(0,0,0,0.9)',
-        color: '#e5e7eb',
-        fontFamily: 'inherit',
-        position: 'relative',
-      }}>
-        {/* X close button */}
-        <button
-          onClick={onSkip}
-          style={{
-            position: 'absolute', top: '16px', right: '16px',
-            background: 'none', border: 'none',
-            color: '#6b7280', fontSize: '20px', lineHeight: 1,
-            cursor: 'pointer', padding: '4px 8px',
-            borderRadius: '6px',
-            transition: 'color 0.1s',
-          }}
-          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#e5e7eb')}
-          onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#6b7280')}
-          title="Keep only one parent"
-        >
-          ✕
-        </button>
-
-        {/* Title */}
-        <p style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 700, color: '#f3f4f6', paddingRight: '32px' }}>
-          {title}
-        </p>
-
-        {/* "(Kit) was added as a child to (Self)." */}
-        <p style={{ margin: '0 0 12px 0', fontSize: '14px', lineHeight: 1.7, color: '#9ca3af' }}>
-          <b style={{ color: '#f9fafb' }}>{kitName}</b>
-          {' was added as a child to '}
-          <b style={{ color: '#f9fafb' }}>{selfName}</b>.
-        </p>
-
-        {/* "Should (Kit) also be linked to (Partner(s))?" */}
-        <p style={{ margin: '0 0 28px 0', fontSize: '14px', lineHeight: 1.7, color: '#9ca3af' }}>
-          {'Should '}
-          <b style={{ color: '#f9fafb' }}>{kitName}</b>
-          {' also be linked to '}
-          <b style={{ color: '#f9fafb' }}>{partnerDisplay}</b>?
-        </p>
-
-        {/* Yes buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {modal.mates.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onLink(m.id)}
-              style={{
-                backgroundColor: '#ffffff', color: '#111',
-                fontWeight: 600, fontSize: '14px',
-                border: 'none', borderRadius: '8px',
-                padding: '13px 20px', cursor: 'pointer',
-                textAlign: 'center', transition: 'opacity 0.1s',
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-            >
-              Yes, link to <b>{m.name}</b>
-            </button>
-          ))}
-          {modal.exMates.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onLink(m.id)}
-              style={{
-                backgroundColor: '#ffffff', color: '#111',
-                fontWeight: 600, fontSize: '14px',
-                border: 'none', borderRadius: '8px',
-                padding: '13px 20px', cursor: 'pointer',
-                textAlign: 'center', transition: 'opacity 0.1s',
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-            >
-              Yes, link to <b>{m.name}</b>
-            </button>
-          ))}
-
-          {/* No button — same background as modal */}
-          <button
-            onClick={onSkip}
-            style={{
-              backgroundColor: BG, color: '#e5e7eb',
-              fontWeight: 600, fontSize: '14px',
-              border: '1px solid #333', borderRadius: '8px',
-              padding: '13px 20px', cursor: 'pointer',
-              textAlign: 'center', marginTop: '6px',
-              transition: 'border-color 0.1s',
-            }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#555')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#333')}
-          >
-            No, keep only one parent
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -372,11 +195,11 @@ export default function FamilyTreeCanvas() {
   const [addMenuId,   setAddMenuId]   = useState<string | null>(null);
   const [transform,   setTransform]   = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const [kitModal,    setKitModal]    = useState<KitModal | null>(null);
+  const [editCatId,   setEditCatId]   = useState<string | null>(null);
   const [snapGrid,    setSnapGrid]    = useState<number>(0);
 
-  const viewportRef  = useRef<HTMLDivElement>(null);
-  const nodeRefs     = useRef<Record<string, HTMLDivElement | null>>({});
-  const transformRef = useRef(transform);
+  const viewportRef    = useRef<HTMLDivElement>(null);
+  const transformRef   = useRef(transform);
   transformRef.current = transform;
   const catsRef = useRef(cats);
   catsRef.current = cats;
@@ -464,7 +287,7 @@ export default function FamilyTreeCanvas() {
 
   const onTouchEnd = useCallback(() => { pinchState.current.active = false; }, []);
 
-  // ── Node drag — live state updates + snap ───────────────────────────────────
+  // ── Node drag — live state + snap ───────────────────────────────────────────
   const onNodeDown = useCallback((e: React.PointerEvent, cat: CatNode) => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -479,14 +302,12 @@ export default function FamilyTreeCanvas() {
     const dy = (e.clientY - startClientY) / scale;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) catDrag.current.moved = true;
     const grid = snapGridRef.current;
-    const nx = snapTo(nodeStartX + dx, grid);
-    const ny = snapTo(nodeStartY + dy, grid);
     setCats((prev) =>
-      prev.map((c) => c.id === id ? { ...c, x: nx, y: ny } : c)
+      prev.map((c) => c.id === id ? { ...c, x: snapTo(nodeStartX + dx, grid), y: snapTo(nodeStartY + dy, grid) } : c)
     );
   }, []);
 
-  const onNodeUp = useCallback((e: React.PointerEvent, cat: CatNode) => {
+  const onNodeUp = useCallback((_e: React.PointerEvent, cat: CatNode) => {
     const { id, moved } = catDrag.current;
     if (!id) return;
     if (!moved) {
@@ -502,15 +323,15 @@ export default function FamilyTreeCanvas() {
   const deleteCat = useCallback((catId: string) => {
     setCats((prev) => prev.filter((c) => c.id !== catId));
     setConnections((prev) => prev.filter((cn) => cn.fromId !== catId && cn.toId !== catId));
-    setActivePopup(null);
-    setAddMenuId(null);
+    setActivePopup(null); setAddMenuId(null);
   }, []);
 
   // ── Add free cat ────────────────────────────────────────────────────────────
   const addCat = useCallback(() => {
     const { x, y, scale } = transformRef.current;
-    const cx = (window.innerWidth / 2 - x) / scale + (Math.random() - 0.5) * 120;
-    const cy = (window.innerHeight / 2 - y) / scale + (Math.random() - 0.5) * 120;
+    const grid = snapGridRef.current;
+    const cx = snapTo((window.innerWidth / 2 - x) / scale, grid || 1);
+    const cy = snapTo((window.innerHeight / 2 - y) / scale, grid || 1);
     setCats((prev) => [...prev, { id: Math.random().toString(36).slice(2, 9), name: 'New Cat', x: cx, y: cy }]);
   }, []);
 
@@ -520,43 +341,33 @@ export default function FamilyTreeCanvas() {
     if (!from) return;
     const S = 230;
     const offsets: Record<RelationType, [number, number]> = {
-      parent:    [0,  -S],
-      kit:       [0,   S],
-      mate:      [S,   0],
-      'ex-mate': [-S,  0],
+      parent: [0, -S], kit: [0, S], mate: [S, 0], 'ex-mate': [-S, 0],
     };
     const [ox, oy] = offsets[type];
+    const grid = snapGridRef.current;
     const newId = Math.random().toString(36).slice(2, 9);
-
-    const newCat: CatNode = { id: newId, name: 'New Cat', x: from.x + ox, y: from.y + oy };
-    setCats((prev) => [...prev, newCat]);
+    const newX = snapTo(from.x + ox, grid || 1);
+    const newY = snapTo(from.y + oy, grid || 1);
+    setCats((prev) => [...prev, { id: newId, name: 'New Cat', x: newX, y: newY }]);
     setConnections((prev) => [
       ...prev,
       { id: Math.random().toString(36).slice(2, 9), fromId: fromCatId, toId: newId, type },
     ]);
-
-    setActivePopup(null);
-    setAddMenuId(null);
+    setActivePopup(null); setAddMenuId(null);
 
     if (type === 'kit') {
       const conns = connectionsRef.current;
       const partnerIds = conns
-        .filter((cn) =>
-          (cn.fromId === fromCatId || cn.toId === fromCatId) &&
-          (cn.type === 'mate' || cn.type === 'ex-mate')
-        )
+        .filter((cn) => (cn.fromId === fromCatId || cn.toId === fromCatId) && (cn.type === 'mate' || cn.type === 'ex-mate'))
         .map((cn) => ({ partnerId: cn.fromId === fromCatId ? cn.toId : cn.fromId, relType: cn.type }));
-
       const allCats = catsRef.current;
-      const mates:   CatNode[] = [];
-      const exMates: CatNode[] = [];
+      const mates: CatNode[] = [], exMates: CatNode[] = [];
       for (const { partnerId, relType } of partnerIds) {
         const node = allCats.find((c) => c.id === partnerId);
         if (!node) continue;
         if (relType === 'mate')    mates.push(node);
         if (relType === 'ex-mate') exMates.push(node);
       }
-
       if (mates.length > 0 || exMates.length > 0) {
         setKitModal({ forCatId: fromCatId, newKitId: newId, mates, exMates });
       }
@@ -573,7 +384,12 @@ export default function FamilyTreeCanvas() {
     setKitModal(null);
   }, [kitModal]);
 
-  const handleKitSkip = useCallback(() => setKitModal(null), []);
+  // ── Edit modal save ─────────────────────────────────────────────────────────
+  const handleEditSave = useCallback((updatedCat: CatNode, newConns: Connection[]) => {
+    setCats((prev) => prev.map((c) => c.id === updatedCat.id ? updatedCat : c));
+    setConnections(newConns);
+    setEditCatId(null);
+  }, []);
 
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -633,7 +449,6 @@ export default function FamilyTreeCanvas() {
           {cats.map((cat) => (
             <div
               key={cat.id}
-              ref={(el) => (nodeRefs.current[cat.id] = el)}
               className="cat-node"
               data-testid={`cat-node-${cat.id}`}
               onPointerDown={(e) => onNodeDown(e, cat)}
@@ -644,78 +459,106 @@ export default function FamilyTreeCanvas() {
                 position: 'absolute',
                 left: cat.x, top: cat.y,
                 transform: 'translate(-50%, -50%)',
+                cursor: 'grab', userSelect: 'none', touchAction: 'none',
+                zIndex: activePopup === cat.id ? 20 : 10,
+              }}
+            >
+              {/* Large image square sitting on top of the card */}
+              {cat.image && (
+                <img
+                  src={cat.image}
+                  alt=""
+                  style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    marginBottom: '0px',
+                    width: 130, height: 130,
+                    objectFit: 'cover',
+                    borderRadius: '10px 10px 0 0',
+                    display: 'block',
+                    pointerEvents: 'none',
+                    boxShadow: '0 -2px 10px rgba(0,0,0,0.4)',
+                    zIndex: 1,
+                  }}
+                />
+              )}
+
+              {/* Name label card */}
+              <div style={{
                 backgroundColor: '#ffffff',
-                borderRadius: '12px',
+                borderRadius: cat.image ? '0 0 12px 12px' : '12px',
                 padding: '13px 36px',
                 minWidth: '200px',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
                 fontWeight: 600, fontSize: '14px', color: '#111',
-                cursor: 'grab', userSelect: 'none', touchAction: 'none',
-                zIndex: activePopup === cat.id ? 20 : 10,
                 textAlign: 'center', whiteSpace: 'nowrap',
-              }}
-            >
-              {cat.name}
+                position: 'relative',
+              }}>
+                {cat.name}
 
-              {activePopup === cat.id && (
-                <div
-                  className="cat-popup"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  style={{
-                    position: 'absolute',
-                    bottom: 'calc(100% + 12px)', left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: '#ffffff', borderRadius: '10px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                    display: 'flex', alignItems: 'center',
-                    padding: '5px', gap: '1px',
-                    zIndex: 30, userSelect: 'none', whiteSpace: 'nowrap',
-                  }}
-                >
-                  <DownArrow />
+                {/* Horizontal popup */}
+                {activePopup === cat.id && (
+                  <div
+                    className="cat-popup"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 12px)', left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: '#ffffff', borderRadius: '10px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                      display: 'flex', alignItems: 'center',
+                      padding: '5px', gap: '1px',
+                      zIndex: 30, userSelect: 'none', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <DownArrow />
 
-                  {addMenuId === cat.id && (
-                    <div
-                      onPointerDown={(e) => e.stopPropagation()}
-                      style={{
-                        position: 'absolute',
-                        bottom: 'calc(100% + 10px)', left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#ffffff', borderRadius: '10px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                        display: 'flex', flexDirection: 'column',
-                        padding: '5px', gap: '1px', zIndex: 40, minWidth: '160px',
-                      }}
-                    >
-                      <DownArrow />
-                      <VerticalBtn label="Parent"  testId="add-parent"  onClick={() => addRelation(cat.id, 'parent')} />
-                      <VerticalBtn label="Mate"    testId="add-mate"    onClick={() => addRelation(cat.id, 'mate')} />
-                      <VerticalBtn label="Ex-Mate" testId="add-ex-mate" onClick={() => addRelation(cat.id, 'ex-mate')} />
-                      <VerticalBtn label="Kit"     testId="add-kit"     onClick={() => addRelation(cat.id, 'kit')} />
-                    </div>
-                  )}
+                    {/* Vertical Add sub-menu */}
+                    {addMenuId === cat.id && (
+                      <div
+                        onPointerDown={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'absolute',
+                          bottom: 'calc(100% + 10px)', left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: '#ffffff', borderRadius: '10px',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                          display: 'flex', flexDirection: 'column',
+                          padding: '5px', gap: '1px', zIndex: 40, minWidth: '160px',
+                        }}
+                      >
+                        <DownArrow />
+                        <VerticalBtn label="Parent"  testId="add-parent"  onClick={() => addRelation(cat.id, 'parent')} />
+                        <VerticalBtn label="Mate"    testId="add-mate"    onClick={() => addRelation(cat.id, 'mate')} />
+                        <VerticalBtn label="Ex-Mate" testId="add-ex-mate" onClick={() => addRelation(cat.id, 'ex-mate')} />
+                        <VerticalBtn label="Kit"     testId="add-kit"     onClick={() => addRelation(cat.id, 'kit')} />
+                      </div>
+                    )}
 
-                  <PopupBtn label="View"   testId="popup-view" />
-                  <PopupBtn label="Edit"   testId="popup-edit" />
-                  <PopupBtn
-                    label="Add"
-                    testId="popup-add"
-                    active={addMenuId === cat.id}
-                    onClick={() => setAddMenuId((prev) => prev === cat.id ? null : cat.id)}
-                  />
-                  <PopupBtn
-                    label="Delete"
-                    color="#c0392b"
-                    testId="popup-delete"
-                    onClick={() => deleteCat(cat.id)}
-                  />
-                  <PopupBtn
-                    label="Close"
-                    testId="popup-close"
-                    onClick={() => { setActivePopup(null); setAddMenuId(null); }}
-                  />
-                </div>
-              )}
+                    <PopupBtn label="View" testId="popup-view" />
+                    <PopupBtn
+                      label="Edit"
+                      testId="popup-edit"
+                      onClick={() => { setEditCatId(cat.id); setActivePopup(null); setAddMenuId(null); }}
+                    />
+                    <PopupBtn
+                      label="Add"
+                      testId="popup-add"
+                      active={addMenuId === cat.id}
+                      onClick={() => setAddMenuId((prev) => prev === cat.id ? null : cat.id)}
+                    />
+                    <PopupBtn label="Delete" color="#c0392b" testId="popup-delete" onClick={() => deleteCat(cat.id)} />
+                    <PopupBtn
+                      label="Close"
+                      testId="popup-close"
+                      onClick={() => { setActivePopup(null); setAddMenuId(null); }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -746,7 +589,18 @@ export default function FamilyTreeCanvas() {
           modal={kitModal}
           cats={cats}
           onLink={handleKitLink}
-          onSkip={handleKitSkip}
+          onSkip={() => setKitModal(null)}
+        />
+      )}
+
+      {/* Edit modal */}
+      {editCatId && (
+        <EditModal
+          catId={editCatId}
+          cats={cats}
+          connections={connections}
+          onSave={handleEditSave}
+          onClose={() => setEditCatId(null)}
         />
       )}
     </>
