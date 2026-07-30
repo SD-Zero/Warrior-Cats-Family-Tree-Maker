@@ -598,7 +598,7 @@ export default function FamilyTreeCanvas() {
             position: 'fixed', bottom: '28px', left: '28px',
             backgroundColor: 'rgba(255,255,255,0.08)', color: '#e5e7eb',
             fontWeight: 600, fontSize: '14px',
-            borderRadius: '12px', padding: '13px 28px',
+            borderRadius: '10px', padding: '8px 18px', fontSize: '12px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
             border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', zIndex: 1000,
             transition: 'background 0.12s, border-color 0.12s',
