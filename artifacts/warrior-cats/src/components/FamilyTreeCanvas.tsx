@@ -35,7 +35,7 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
   if (conn.type === 'parent' || conn.type === 'kit') {
     const my = (y1 + y2) / 2;
     const d = `M ${x1},${y1} L ${x1},${my} L ${x2},${my} L ${x2},${y2}`;
-    return <path d={d} stroke="#6b7280" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+    return <path d={d} stroke="#848484" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
   }
 
   const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
@@ -160,7 +160,7 @@ function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) =>
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div style={{
-        fontSize: '10px', fontWeight: 600, color: '#4b5563',
+        fontSize: '10px', fontWeight: 600, color: '#636363',
         letterSpacing: '0.08em', textTransform: 'uppercase',
         marginBottom: '2px', paddingLeft: '2px',
       }}>
@@ -176,7 +176,7 @@ function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) =>
               fontSize: '12px', fontWeight: active ? 700 : 500,
               padding: '5px 12px',
               backgroundColor: active ? '#ffffff' : 'rgba(255,255,255,0.06)',
-              color: active ? '#111' : '#6b7280',
+              color: active ? '#111' : '#848484',
               border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
               borderRadius: '7px',
               cursor: 'pointer',

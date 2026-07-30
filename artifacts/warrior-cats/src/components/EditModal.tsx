@@ -108,7 +108,7 @@ function RelationDropdown({
 
   return (
     <div style={{ marginBottom: '14px' }}>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
         {label}
       </div>
       <div
@@ -126,7 +126,7 @@ function RelationDropdown({
         }}
       >
         {selectedTags}
-        <span style={{ fontSize: '13px', color: '#4b5563', userSelect: 'none' }}>
+        <span style={{ fontSize: '13px', color: '#636363', userSelect: 'none' }}>
           {selected.length === 0 ? `Add ${label}…` : `+ Add more…`}
         </span>
       </div>
@@ -160,7 +160,7 @@ function RelationDropdown({
           </div>
           <div style={{ overflowY: 'auto', maxHeight: '152px' }}>
             {available.length === 0 ? (
-              <div style={{ padding: '12px', color: '#4b5563', fontSize: '13px', textAlign: 'center' }}>
+              <div style={{ padding: '12px', color: '#636363', fontSize: '13px', textAlign: 'center' }}>
                 {allCats.filter(c => c.id !== selfId).length === selected.length ? 'All cats added' : 'No matches'}
               </div>
             ) : (
@@ -191,7 +191,7 @@ function RelationDropdown({
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: '11px', fontWeight: 700, color: '#6b7280',
+      fontSize: '11px', fontWeight: 700, color: '#848484',
       textTransform: 'uppercase', letterSpacing: '0.1em',
       marginBottom: '16px', paddingBottom: '8px',
       borderBottom: '1px solid #1f1f1f',
@@ -218,7 +218,7 @@ function Field({
   };
   return (
     <div style={{ marginBottom: '12px' }}>
-      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>
         {label}
       </label>
       {multiline ? (
@@ -274,7 +274,7 @@ function GenderSelector({ value, onChange }: { value: string; onChange: (v: stri
 
   return (
     <div style={{ marginBottom: '12px' }}>
-      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
         Gender
       </label>
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -288,7 +288,7 @@ function GenderSelector({ value, onChange }: { value: string; onChange: (v: stri
               borderRadius: '8px',
               border: active(g) ? '1px solid #555' : '1px solid #2a2a2a',
               backgroundColor: active(g) ? '#1e1e1e' : '#000',
-              color: active(g) ? '#e5e7eb' : '#6b7280',
+              color: active(g) ? '#e5e7eb' : '#848484',
               fontSize: '13px', cursor: 'pointer', fontWeight: 600,
               transition: 'all 0.12s', fontFamily: 'inherit',
             }}
@@ -411,12 +411,12 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: 'none', color: '#6b7280',
+              background: 'none', border: 'none', color: '#848484',
               fontSize: '18px', cursor: 'pointer', padding: '4px 8px',
               borderRadius: '6px', lineHeight: 1,
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#e5e7eb')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6b7280')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#848484')}
           >
             ✕
           </button>
@@ -457,11 +457,11 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
                 </>
               ) : (
                 <>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#636363" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
-                  <span style={{ fontSize: '11px', color: '#4b5563', marginTop: '6px', fontWeight: 500 }}>Add Image</span>
+                  <span style={{ fontSize: '11px', color: '#636363', marginTop: '6px', fontWeight: 500 }}>Add Image</span>
                 </>
               )}
             </div>
@@ -470,13 +470,13 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
                 type="button"
                 onClick={() => setImage('')}
                 style={{
-                  background: 'none', border: 'none', color: '#6b7280',
+                  background: 'none', border: 'none', color: '#848484',
                   fontSize: '12px', cursor: 'pointer', padding: '4px 8px',
                   fontFamily: 'inherit', textDecoration: 'underline',
                   transition: 'color 0.1s',
                 }}
                 onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#ef4444')}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6b7280')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#848484')}
               >
                 Remove photo
               </button>
@@ -503,9 +503,9 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
           <RelationDropdown label="Parent(s)"  selected={parents} onAdd={(id) => setParents((p) => [...p, id])} onRemove={(id) => setParents((p) => p.filter((x) => x !== id))} allCats={cats} selfId={catId} />
           <RelationDropdown label="Kit(s)"     selected={kits}    onAdd={(id) => setKits((p) => [...p, id])}    onRemove={(id) => setKits((p) => p.filter((x) => x !== id))}    allCats={cats} selfId={catId} />
 
-          {/* Other Roles (not drawn on tree) */}
+          {/* Other Relationships (not drawn on tree) */}
           <div style={{ marginTop: '28px', marginBottom: '4px' }}>
-            <SectionHeading>Other Roles</SectionHeading>
+            <SectionHeading>Other Relationships</SectionHeading>
           </div>
           <RelationDropdown label="Mentor(s)"     selected={mentors}     onAdd={(id) => setMentors((p) => [...p, id])}     onRemove={(id) => setMentors((p) => p.filter((x) => x !== id))}     allCats={cats} selfId={catId} />
           <RelationDropdown label="Apprentice(s)" selected={apprentices} onAdd={(id) => setApprentices((p) => [...p, id])} onRemove={(id) => setApprentices((p) => p.filter((x) => x !== id))} allCats={cats} selfId={catId} />
@@ -527,7 +527,7 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
           <button
             onClick={onClose}
             style={{
-              backgroundColor: BG, color: '#9ca3af', border: '1px solid #333',
+              backgroundColor: BG, color: '#ababab', border: '1px solid #333',
               borderRadius: '8px', padding: '10px 22px', fontWeight: 600,
               fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
             }}

@@ -19,13 +19,13 @@ function generateSummary(cat: CatNode, cats: CatNode[], connections: Connection[
   const name = cat.name;
   const lines: string[] = [];
 
-  const mateIds    = getRelatedIds(cat.id, connections, 'mate');
-  const exMateIds  = getRelatedIds(cat.id, connections, 'ex-mate');
-  const parentIds  = getRelatedIds(cat.id, connections, 'parent');
-  const kitIds     = getRelatedIds(cat.id, connections, 'kit');
-  const mentorIds  = cat.mentors     ?? [];
-  const appIds     = cat.apprentices ?? [];
-  const succIds    = cat.successors  ?? [];
+  const mateIds   = getRelatedIds(cat.id, connections, 'mate');
+  const exMateIds = getRelatedIds(cat.id, connections, 'ex-mate');
+  const parentIds = getRelatedIds(cat.id, connections, 'parent');
+  const kitIds    = getRelatedIds(cat.id, connections, 'kit');
+  const mentorIds = cat.mentors     ?? [];
+  const appIds    = cat.apprentices ?? [];
+  const succIds   = cat.successors  ?? [];
 
   if (mateIds.length)   lines.push(`${name} is mate of ${joinNames(resolveNames(mateIds, cats))}.`);
   if (exMateIds.length) lines.push(`${name} is ex-mate of ${joinNames(resolveNames(exMateIds, cats))}.`);
@@ -45,16 +45,14 @@ function Divider() {
   return <div style={{ height: '1px', backgroundColor: '#1f1f1f', flexShrink: 0 }} />;
 }
 
+const LABEL: React.CSSProperties = {
+  fontSize: '10px', fontWeight: 700, color: '#848484',
+  textTransform: 'uppercase', letterSpacing: '0.12em',
+  marginBottom: '8px',
+};
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      fontSize: '10px', fontWeight: 700, color: '#6b7280',
-      textTransform: 'uppercase', letterSpacing: '0.12em',
-      marginBottom: '10px',
-    }}>
-      {children}
-    </div>
-  );
+  return <div style={LABEL}>{children}</div>;
 }
 
 function RelationGroup({ label, ids, cats }: { label: string; ids: string[]; cats: CatNode[] }) {
@@ -62,16 +60,13 @@ function RelationGroup({ label, ids, cats }: { label: string; ids: string[]; cat
   const names = resolveNames(ids, cats);
   return (
     <div style={{ marginBottom: '12px' }}>
-      <div style={{
-        fontSize: '10px', fontWeight: 700, color: '#6b7280',
-        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px',
-      }}>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>
         {label}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         {names.map((name, i) => (
           <span key={i} style={{
-            backgroundColor: '#1a1a1a', color: '#e5e7eb',
+            backgroundColor: '#1a1a1a', color: '#e8e8e8',
             borderRadius: '6px', padding: '4px 10px',
             fontSize: '13px', fontWeight: 500,
             border: '1px solid #2a2a2a',
@@ -93,19 +88,19 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
         style={{
           width: '100%', background: 'none', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0', cursor: 'pointer', marginBottom: open ? '12px' : '0',
+          padding: '0', cursor: 'pointer', marginBottom: open ? '10px' : '0',
         }}
       >
-        <SectionLabel>{title}</SectionLabel>
+        <div style={{ ...LABEL, marginBottom: 0 }}>{title}</div>
         <svg
           width="14" height="14" viewBox="0 0 14 14" fill="none"
-          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0, marginBottom: open ? '10px' : '0' }}
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}
         >
-          <path d="M2 4.5L7 9.5L12 4.5" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 4.5L7 9.5L12 4.5" stroke="#848484" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
       {open && (
-        <div style={{ fontSize: '13px', color: '#9ca3af', lineHeight: 1.7 }}>
+        <div style={{ fontSize: '13px', color: '#ababab', lineHeight: 1.7 }}>
           {children}
         </div>
       )}
@@ -115,15 +110,15 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 
 // ─── Cat placeholder icon ─────────────────────────────────────────────────────
 
-function CatIcon() {
+function CatPlaceholderIcon() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="22" r="11" stroke="#3a3a3a" strokeWidth="1.5" />
-      <polygon points="10,13 7,6 14,12" fill="none" stroke="#3a3a3a" strokeWidth="1.5" strokeLinejoin="round"/>
-      <polygon points="26,13 29,6 22,12" fill="none" stroke="#3a3a3a" strokeWidth="1.5" strokeLinejoin="round"/>
-      <circle cx="14" cy="21" r="1.5" fill="#3a3a3a"/>
-      <circle cx="22" cy="21" r="1.5" fill="#3a3a3a"/>
-      <path d="M18 24 L16 26 L18 25.5 L20 26 Z" fill="#3a3a3a"/>
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="50" r="26" stroke="#333" strokeWidth="2" />
+      <polygon points="22,29 15,13 31,27" fill="none" stroke="#333" strokeWidth="2" strokeLinejoin="round"/>
+      <polygon points="58,29 65,13 49,27" fill="none" stroke="#333" strokeWidth="2" strokeLinejoin="round"/>
+      <circle cx="31" cy="48" r="3.5" fill="#333"/>
+      <circle cx="49" cy="48" r="3.5" fill="#333"/>
+      <path d="M40 55 L36 60 L40 58.5 L44 60 Z" fill="#333"/>
     </svg>
   );
 }
@@ -156,13 +151,14 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
   const parentIds = getRelatedIds(cat.id, connections, 'parent');
   const kitIds    = getRelatedIds(cat.id, connections, 'kit');
 
-  const summaryLines = generateSummary(cat, cats, connections);
-
-  const hasRelationships =
-    mateIds.length > 0 || exMateIds.length > 0 || parentIds.length > 0 || kitIds.length > 0 ||
+  const hasTreeRels = mateIds.length > 0 || exMateIds.length > 0 || parentIds.length > 0 || kitIds.length > 0;
+  const hasOtherRels =
     (cat.mentors?.length ?? 0) > 0 || (cat.apprentices?.length ?? 0) > 0 || (cat.successors?.length ?? 0) > 0;
 
-  const roleLabel = [cat.gender, cat.allegiance, cat.rank].filter(Boolean).join(' · ');
+  const summaryLines = generateSummary(cat, cats, connections);
+
+  // Role line: allegiance · rank (gender shown separately)
+  const roleLabel = [cat.allegiance, cat.rank].filter(Boolean).join(' · ');
 
   return (
     <div
@@ -176,42 +172,38 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
         fontFamily: 'inherit',
       }}
     >
-      {/* Top bar: CHARACTER label + close */}
+      {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 20px', height: '44px',
-        borderBottom: '1px solid #1f1f1f',
-        flexShrink: 0,
+        borderBottom: '1px solid #1f1f1f', flexShrink: 0,
       }}>
-        <span style={{
-          fontSize: '10px', fontWeight: 700, color: '#6b7280',
-          textTransform: 'uppercase', letterSpacing: '0.14em',
-        }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
           Character
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={onEdit}
             style={{
-              background: 'none', border: '1px solid #2a2a2a', color: '#9ca3af',
+              background: 'none', border: '1px solid #2a2a2a', color: '#ababab',
               fontSize: '11px', fontWeight: 600, cursor: 'pointer',
               padding: '5px 12px', borderRadius: '6px', fontFamily: 'inherit',
               transition: 'border-color 0.1s, color 0.1s',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#444'; (e.currentTarget as HTMLElement).style.color = '#e5e7eb'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a2a2a'; (e.currentTarget as HTMLElement).style.color = '#9ca3af'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#555'; (e.currentTarget as HTMLElement).style.color = '#e8e8e8'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a2a2a'; (e.currentTarget as HTMLElement).style.color = '#ababab'; }}
           >
             Edit
           </button>
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: 'none', color: '#6b7280',
+              background: 'none', border: 'none', color: '#848484',
               fontSize: '18px', cursor: 'pointer', padding: '4px 6px',
               borderRadius: '6px', lineHeight: 1,
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#e5e7eb')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6b7280')}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#e8e8e8')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#848484')}
           >
             ✕
           </button>
@@ -222,7 +214,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
       <div style={{ overflowY: 'auto', flex: 1 }}>
 
         {/* Photo area */}
-        <div style={{ position: 'relative', height: '220px', backgroundColor: '#0a0a0a', flexShrink: 0 }}>
+        <div style={{ position: 'relative', height: '240px', backgroundColor: '#080808', flexShrink: 0, overflow: 'hidden' }}>
           {cat.image ? (
             <img
               src={cat.image}
@@ -230,35 +222,35 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           ) : (
+            /* Big centered placeholder circle */
             <div style={{
               width: '100%', height: '100%',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: '10px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <div style={{
-                width: '72px', height: '72px', borderRadius: '50%',
-                border: '1.5px solid #2a2a2a',
+                width: '160px', height: '160px', borderRadius: '50%',
+                border: '2px solid #282828',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backgroundColor: '#111',
               }}>
-                <CatIcon />
+                <CatPlaceholderIcon />
               </div>
-              <span style={{ fontSize: '12px', color: '#4b5563', fontWeight: 500 }}>No photo</span>
             </div>
           )}
 
-          {/* Add photo button – bottom left */}
+          {/* Add / Change photo button — bottom right */}
           <button
             onClick={() => fileRef.current?.click()}
             style={{
-              position: 'absolute', bottom: '12px', left: '12px',
+              position: 'absolute', bottom: '12px', right: '12px',
               backgroundColor: '#000', color: '#ffffff',
-              border: '1px solid #333', borderRadius: '8px',
+              border: '1px solid #383838', borderRadius: '8px',
               padding: '8px 16px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer', fontFamily: 'inherit',
               transition: 'border-color 0.1s',
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#666')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#333')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#383838')}
           >
             {cat.image ? 'Change photo' : 'Add photo'}
           </button>
@@ -267,13 +259,23 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
 
         <Divider />
 
-        {/* Name + role */}
+        {/* Name + gender + role */}
         <div style={{ padding: '20px', backgroundColor: '#000' }}>
-          <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#f3f4f6', margin: 0, lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#f5f5f5', margin: 0, lineHeight: 1.2 }}>
             {cat.name}
           </h1>
+          {cat.gender && (
+            <span style={{
+              display: 'inline-block', marginTop: '8px',
+              backgroundColor: '#1a1a1a', color: '#ababab',
+              border: '1px solid #2a2a2a', borderRadius: '6px',
+              padding: '3px 10px', fontSize: '12px', fontWeight: 600,
+            }}>
+              {cat.gender}
+            </span>
+          )}
           {roleLabel && (
-            <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '6px', marginBottom: 0 }}>
+            <p style={{ fontSize: '13px', color: '#ababab', marginTop: cat.gender ? '6px' : '6px', marginBottom: 0 }}>
               {roleLabel}
             </p>
           )}
@@ -284,18 +286,14 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
         {/* Birth & Death Season */}
         <div style={{ padding: '20px', backgroundColor: '#000', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>
-              Birth Season
-            </div>
-            <div style={{ fontSize: '14px', color: cat.birthSeason ? '#e5e7eb' : '#3a3a3a', fontWeight: 500 }}>
+            <div style={{ ...LABEL }}>Birth Season</div>
+            <div style={{ fontSize: '14px', color: cat.birthSeason ? '#e8e8e8' : '#3a3a3a', fontWeight: 500 }}>
               {cat.birthSeason || '—'}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>
-              Death Season
-            </div>
-            <div style={{ fontSize: '14px', color: cat.deathSeason ? '#e5e7eb' : '#3a3a3a', fontWeight: 500 }}>
+            <div style={{ ...LABEL }}>Death Season</div>
+            <div style={{ fontSize: '14px', color: cat.deathSeason ? '#e8e8e8' : '#3a3a3a', fontWeight: 500 }}>
               {cat.deathSeason || '—'}
             </div>
           </div>
@@ -308,29 +306,44 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           <Accordion title="Biography">
             {cat.description
               ? <p style={{ margin: 0 }}>{cat.description}</p>
-              : <p style={{ margin: 0, color: '#4b5563', fontStyle: 'italic' }}>No biography recorded.</p>
+              : <p style={{ margin: 0, color: '#636363', fontStyle: 'italic' }}>No biography recorded.</p>
             }
           </Accordion>
         </div>
 
         <Divider />
 
-        {/* Relationships */}
+        {/* Relationships (tree) */}
         <div style={{ padding: '20px', backgroundColor: '#000' }}>
           <SectionLabel>Relationships</SectionLabel>
-          {hasRelationships ? (
+          {hasTreeRels ? (
             <>
-              <RelationGroup label="Mate(s)"       ids={mateIds}                  cats={cats} />
-              <RelationGroup label="Ex-Mate(s)"    ids={exMateIds}                cats={cats} />
-              <RelationGroup label="Parent(s)"     ids={parentIds}                cats={cats} />
-              <RelationGroup label="Kit(s)"        ids={kitIds}                   cats={cats} />
-              <RelationGroup label="Mentor(s)"     ids={cat.mentors     ?? []}    cats={cats} />
-              <RelationGroup label="Apprentice(s)" ids={cat.apprentices ?? []}    cats={cats} />
-              <RelationGroup label="Successor(s)"  ids={cat.successors  ?? []}    cats={cats} />
+              <RelationGroup label="Mate(s)"    ids={mateIds}   cats={cats} />
+              <RelationGroup label="Ex-Mate(s)" ids={exMateIds} cats={cats} />
+              <RelationGroup label="Parent(s)"  ids={parentIds} cats={cats} />
+              <RelationGroup label="Kit(s)"     ids={kitIds}    cats={cats} />
             </>
           ) : (
-            <p style={{ fontSize: '13px', color: '#4b5563', fontStyle: 'italic', margin: 0 }}>
-              No relationships recorded.
+            <p style={{ fontSize: '13px', color: '#636363', fontStyle: 'italic', margin: 0 }}>
+              No tree relationships recorded.
+            </p>
+          )}
+        </div>
+
+        <Divider />
+
+        {/* Other Relationships (mentor / apprentice / successor) */}
+        <div style={{ padding: '20px', backgroundColor: '#000' }}>
+          <SectionLabel>Other Relationships</SectionLabel>
+          {hasOtherRels ? (
+            <>
+              <RelationGroup label="Mentor(s)"     ids={cat.mentors     ?? []} cats={cats} />
+              <RelationGroup label="Apprentice(s)" ids={cat.apprentices ?? []} cats={cats} />
+              <RelationGroup label="Successor(s)"  ids={cat.successors  ?? []} cats={cats} />
+            </>
+          ) : (
+            <p style={{ fontSize: '13px', color: '#636363', fontStyle: 'italic', margin: 0 }}>
+              No other relationships recorded.
             </p>
           )}
         </div>
@@ -342,7 +355,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           <Accordion title="Relationship Notes">
             {cat.relationshipNotes
               ? <p style={{ margin: 0 }}>{cat.relationshipNotes}</p>
-              : <p style={{ margin: 0, color: '#4b5563', fontStyle: 'italic' }}>No notes recorded.</p>
+              : <p style={{ margin: 0, color: '#636363', fontStyle: 'italic' }}>No notes recorded.</p>
             }
           </Accordion>
         </div>
@@ -354,14 +367,13 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           <SectionLabel>Summary</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {summaryLines.map((line, i) => (
-              <p key={i} style={{ fontSize: '13px', color: '#9ca3af', margin: 0, lineHeight: 1.65 }}>
+              <p key={i} style={{ fontSize: '13px', color: '#ababab', margin: 0, lineHeight: 1.65 }}>
                 {line}
               </p>
             ))}
           </div>
         </div>
 
-        {/* Bottom padding */}
         <div style={{ height: '32px', backgroundColor: '#000' }} />
       </div>
     </div>
