@@ -5,8 +5,7 @@ import { CatNode, Connection, RelationType } from '../types';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
-/** Get the IDs of cats related to `catId` by a given connection type. */
-function getRelatedIds(catId: string, conns: Connection[], type: RelationType): string[] {
+export function getRelatedIds(catId: string, conns: Connection[], type: RelationType): string[] {
   const ids = new Set<string>();
   for (const cn of conns) {
     if (cn.type !== type) continue;
@@ -14,21 +13,16 @@ function getRelatedIds(catId: string, conns: Connection[], type: RelationType): 
       if (cn.fromId === catId) ids.add(cn.toId);
       if (cn.toId   === catId) ids.add(cn.fromId);
     } else if (type === 'parent') {
-      // convention: fromId=child, toId=parent
       if (cn.fromId === catId) ids.add(cn.toId);
-      // also handle 'kit' connections where catId appears as the child (toId)
     } else if (type === 'kit') {
-      // convention: fromId=parent, toId=child
       if (cn.fromId === catId) ids.add(cn.toId);
     }
   }
-  // For parents: also pick up 'kit' connections where we are the kit (toId)
   if (type === 'parent') {
     for (const cn of conns) {
       if (cn.type === 'kit' && cn.toId === catId) ids.add(cn.fromId);
     }
   }
-  // For kits: also pick up 'parent' connections where we are the parent (toId)
   if (type === 'kit') {
     for (const cn of conns) {
       if (cn.type === 'parent' && cn.toId === catId) ids.add(cn.fromId);
@@ -87,23 +81,18 @@ function RelationDropdown({
       c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
       if (
         containerRef.current && !containerRef.current.contains(e.target as Node) &&
         dropdownRef.current  && !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-        setSearch('');
-      }
+      ) { setOpen(false); setSearch(''); }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Dropdown position — fixed, below the trigger
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
   const openDropdown = useCallback(() => {
     if (!containerRef.current) return;
@@ -122,8 +111,6 @@ function RelationDropdown({
       <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
         {label}
       </div>
-
-      {/* Tags + trigger */}
       <div
         ref={containerRef}
         onClick={openDropdown}
@@ -143,27 +130,19 @@ function RelationDropdown({
           {selected.length === 0 ? `Add ${label}…` : `+ Add more…`}
         </span>
       </div>
-
-      {/* Portal-style fixed dropdown */}
       {open && (
         <div
           ref={dropdownRef}
           style={{
             position: 'fixed',
-            top: dropPos.top,
-            left: dropPos.left,
-            width: dropPos.width,
-            backgroundColor: '#000',
-            border: '1px solid #2a2a2a',
-            borderRadius: '8px',
-            zIndex: 9999,
-            maxHeight: '200px',
-            overflow: 'hidden',
+            top: dropPos.top, left: dropPos.left, width: dropPos.width,
+            backgroundColor: '#000', border: '1px solid #2a2a2a',
+            borderRadius: '8px', zIndex: 9999,
+            maxHeight: '200px', overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
             boxShadow: '0 8px 32px rgba(0,0,0,0.9)',
           }}
         >
-          {/* Search */}
           <div style={{ padding: '8px', borderBottom: '1px solid #1a1a1a' }}>
             <input
               autoFocus
@@ -179,14 +158,10 @@ function RelationDropdown({
               }}
             />
           </div>
-
-          {/* Options */}
           <div style={{ overflowY: 'auto', maxHeight: '152px' }}>
             {available.length === 0 ? (
               <div style={{ padding: '12px', color: '#4b5563', fontSize: '13px', textAlign: 'center' }}>
-                {allCats.filter(c => c.id !== selfId).length === selected.length
-                  ? 'All cats added'
-                  : 'No matches'}
+                {allCats.filter(c => c.id !== selfId).length === selected.length ? 'All cats added' : 'No matches'}
               </div>
             ) : (
               available.map((cat) => (
@@ -194,11 +169,8 @@ function RelationDropdown({
                   key={cat.id}
                   onMouseDown={(e) => { e.preventDefault(); onAdd(cat.id); setSearch(''); setOpen(false); }}
                   style={{
-                    padding: '10px 14px',
-                    fontSize: '13px', color: '#e5e7eb',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #0d0d0d',
-                    transition: 'background 0.08s',
+                    padding: '10px 14px', fontSize: '13px', color: '#e5e7eb',
+                    cursor: 'pointer', borderBottom: '1px solid #0d0d0d', transition: 'background 0.08s',
                   }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = '#1a1a1a')}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'transparent')}
@@ -242,8 +214,7 @@ function Field({
     backgroundColor: '#000', border: '1px solid #2a2a2a',
     borderRadius: '8px', padding: '10px 12px',
     color: '#e5e7eb', fontSize: '13px', outline: 'none',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.12s',
+    fontFamily: 'inherit', transition: 'border-color 0.12s',
   };
   return (
     <div style={{ marginBottom: '12px' }}>
@@ -252,21 +223,87 @@ function Field({
       </label>
       {multiline ? (
         <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
+          value={value} onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder} rows={3}
           style={{ ...shared, resize: 'vertical' }}
           onFocus={(e) => ((e.target as HTMLElement).style.borderColor = '#444')}
           onBlur={(e)  => ((e.target as HTMLElement).style.borderColor = '#2a2a2a')}
         />
       ) : (
         <input
+          type="text" value={value} onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder} style={shared}
+          onFocus={(e) => ((e.target as HTMLElement).style.borderColor = '#444')}
+          onBlur={(e)  => ((e.target as HTMLElement).style.borderColor = '#2a2a2a')}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Gender Selector ──────────────────────────────────────────────────────────
+
+function GenderSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const preset = value === 'Tom' || value === 'She-Cat';
+  const isCustom = value !== '' && !preset;
+  const [showCustom, setShowCustom] = useState(isCustom);
+  const [customText, setCustomText] = useState(isCustom ? value : '');
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box',
+    backgroundColor: '#000', border: '1px solid #2a2a2a',
+    borderRadius: '8px', padding: '10px 12px',
+    color: '#e5e7eb', fontSize: '13px', outline: 'none',
+    fontFamily: 'inherit', marginTop: '8px',
+  };
+
+  const select = (g: string) => {
+    if (g === 'Custom') {
+      setShowCustom(true);
+      onChange(customText);
+    } else {
+      setShowCustom(false);
+      onChange(g);
+    }
+  };
+
+  const active = (g: string) => {
+    if (g === 'Custom') return showCustom;
+    return value === g && !showCustom;
+  };
+
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }}>
+        Gender
+      </label>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {(['Tom', 'She-Cat', 'Custom'] as const).map((g) => (
+          <button
+            key={g}
+            type="button"
+            onClick={() => select(g)}
+            style={{
+              flex: 1, padding: '9px 0',
+              borderRadius: '8px',
+              border: active(g) ? '1px solid #555' : '1px solid #2a2a2a',
+              backgroundColor: active(g) ? '#1e1e1e' : '#000',
+              color: active(g) ? '#e5e7eb' : '#6b7280',
+              fontSize: '13px', cursor: 'pointer', fontWeight: 600,
+              transition: 'all 0.12s', fontFamily: 'inherit',
+            }}
+          >
+            {g}
+          </button>
+        ))}
+      </div>
+      {showCustom && (
+        <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          style={shared}
+          value={customText}
+          placeholder="Enter gender…"
+          onChange={(e) => { setCustomText(e.target.value); onChange(e.target.value); }}
+          style={inputStyle}
           onFocus={(e) => ((e.target as HTMLElement).style.borderColor = '#444')}
           onBlur={(e)  => ((e.target as HTMLElement).style.borderColor = '#2a2a2a')}
         />
@@ -290,6 +327,7 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
 
   const [name,              setName]              = useState(cat?.name              ?? 'New Cat');
   const [image,             setImage]             = useState(cat?.image             ?? '');
+  const [gender,            setGender]            = useState(cat?.gender            ?? '');
   const [allegiance,        setAllegiance]        = useState(cat?.allegiance        ?? '');
   const [rank,              setRank]              = useState(cat?.rank              ?? '');
   const [birthSeason,       setBirthSeason]       = useState(cat?.birthSeason       ?? '');
@@ -297,12 +335,14 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
   const [description,       setDescription]       = useState(cat?.description       ?? '');
   const [relationshipNotes, setRelationshipNotes] = useState(cat?.relationshipNotes ?? '');
 
-  const [mates,   setMates]   = useState<string[]>([]);
-  const [exMates, setExMates] = useState<string[]>([]);
-  const [parents, setParents] = useState<string[]>([]);
-  const [kits,    setKits]    = useState<string[]>([]);
+  const [mates,       setMates]       = useState<string[]>([]);
+  const [exMates,     setExMates]     = useState<string[]>([]);
+  const [parents,     setParents]     = useState<string[]>([]);
+  const [kits,        setKits]        = useState<string[]>([]);
+  const [apprentices, setApprentices] = useState<string[]>(cat?.apprentices ?? []);
+  const [mentors,     setMentors]     = useState<string[]>(cat?.mentors     ?? []);
+  const [successors,  setSuccessors]  = useState<string[]>(cat?.successors  ?? []);
 
-  // Initialise relationship sets from existing connections
   useEffect(() => {
     setMates  (getRelatedIds(catId, connections, 'mate'));
     setExMates(getRelatedIds(catId, connections, 'ex-mate'));
@@ -310,7 +350,6 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
     setKits   (getRelatedIds(catId, connections, 'kit'));
   }, [catId, connections]);
 
-  // Image upload
   const fileRef = useRef<HTMLInputElement>(null);
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -318,21 +357,21 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
     const reader = new FileReader();
     reader.onload = () => setImage(reader.result as string);
     reader.readAsDataURL(file);
+    // reset so same file can be re-selected
+    e.target.value = '';
   };
 
-  // Save
   const handleSave = () => {
     const updatedCat: CatNode = {
       ...(cat ?? { id: catId, x: 0, y: 0 }),
-      name, image, allegiance, rank, birthSeason, deathSeason, description, relationshipNotes,
+      name, image, gender, allegiance, rank,
+      birthSeason, deathSeason, description, relationshipNotes,
+      apprentices, mentors, successors,
     };
 
-    // Build fresh connection set for this cat (remove all old, add new)
     const untouched = connections.filter((cn) => {
       const involves = cn.fromId === catId || cn.toId === catId;
-      if (!involves) return true;
-      // keep connections of types NOT managed here
-      return false;
+      return !involves;
     });
 
     const fresh: Connection[] = [
@@ -357,23 +396,16 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
       onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{
-        backgroundColor: BG,
-        border: '1px solid #222',
-        borderRadius: '12px',
-        width: '90%', maxWidth: '640px',
-        maxHeight: '88vh',
+        backgroundColor: BG, border: '1px solid #222', borderRadius: '12px',
+        width: '90%', maxWidth: '640px', maxHeight: '88vh',
         display: 'flex', flexDirection: 'column',
         boxShadow: '0 16px 64px rgba(0,0,0,0.95)',
-        color: '#e5e7eb',
-        fontFamily: 'inherit',
-        position: 'relative',
+        color: '#e5e7eb', fontFamily: 'inherit', position: 'relative',
       }}>
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px 16px 24px',
-          borderBottom: '1px solid #1f1f1f',
-          flexShrink: 0,
+          padding: '20px 24px 16px 24px', borderBottom: '1px solid #1f1f1f', flexShrink: 0,
         }}>
           <span style={{ fontSize: '16px', fontWeight: 700, color: '#f3f4f6' }}>Edit Character</span>
           <button
@@ -394,39 +426,29 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
         <div style={{ overflowY: 'auto', padding: '24px 24px 0 24px', flex: 1 }}>
 
           {/* Image upload */}
-          <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
             <div
               onClick={() => fileRef.current?.click()}
               style={{
-                width: '120px', height: '120px',
-                borderRadius: '10px',
+                width: '120px', height: '120px', borderRadius: '10px',
                 border: `2px dashed ${image ? 'transparent' : '#333'}`,
-                backgroundColor: '#000',
-                cursor: 'pointer',
+                backgroundColor: '#000', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden',
-                position: 'relative',
-                transition: 'border-color 0.12s',
+                overflow: 'hidden', position: 'relative', transition: 'border-color 0.12s',
               }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                if (!image) el.style.borderColor = '#555';
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                if (!image) el.style.borderColor = '#333';
-              }}
+              onMouseEnter={(e) => { if (!image) (e.currentTarget as HTMLElement).style.borderColor = '#555'; }}
+              onMouseLeave={(e) => { if (!image) (e.currentTarget as HTMLElement).style.borderColor = '#333'; }}
             >
               {image ? (
                 <>
                   <img src={image} alt="Character" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    opacity: 0, transition: 'opacity 0.15s',
-                  }}
-                    className="img-overlay"
+                  <div
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: 0, transition: 'opacity 0.15s',
+                    }}
                     onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0')}
                   >
@@ -443,81 +465,71 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
                 </>
               )}
             </div>
+            {image && (
+              <button
+                type="button"
+                onClick={() => setImage('')}
+                style={{
+                  background: 'none', border: 'none', color: '#6b7280',
+                  fontSize: '12px', cursor: 'pointer', padding: '4px 8px',
+                  fontFamily: 'inherit', textDecoration: 'underline',
+                  transition: 'color 0.1s',
+                }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#ef4444')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6b7280')}
+              >
+                Remove photo
+              </button>
+            )}
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageFile} />
           </div>
 
           {/* Basic Information */}
           <SectionHeading>Basic Information</SectionHeading>
-          <Field label="Name"         value={name}        onChange={setName}        placeholder="Character name" />
-          <Field label="Allegiance"   value={allegiance}  onChange={setAllegiance}  placeholder="e.g. ThunderClan" />
-          <Field label="Rank"         value={rank}        onChange={setRank}        placeholder="e.g. Warrior, Medicine Cat…" />
-          <Field label="Birth Season" value={birthSeason} onChange={setBirthSeason} placeholder="e.g. Newleaf, Moon 42…" />
-          <Field label="Death Season" value={deathSeason} onChange={setDeathSeason} placeholder="Leave blank if alive" />
-          <Field label="Description"  value={description} onChange={setDescription} placeholder="Appearance, personality…" multiline />
+          <Field label="Name"        value={name}       onChange={setName}       placeholder="Character name" />
+          <GenderSelector value={gender} onChange={setGender} />
+          <Field label="Allegiance"  value={allegiance} onChange={setAllegiance} placeholder="e.g. ThunderClan" />
+          <Field label="Rank"        value={rank}       onChange={setRank}       placeholder="e.g. Warrior, Medicine Cat…" />
+          <Field label="Birth Season" value={birthSeason} onChange={setBirthSeason} placeholder="e.g. Greenleaf, Newleaf…" />
+          <Field label="Death Season" value={deathSeason} onChange={setDeathSeason} placeholder="e.g. Leaf-bare (leave blank if alive)" />
+          <Field label="Description" value={description} onChange={setDescription} placeholder="Appearance, personality…" multiline />
 
-          {/* Relationships */}
+          {/* Tree Relationships */}
           <div style={{ marginTop: '28px', marginBottom: '4px' }}>
-            <SectionHeading>Relationships</SectionHeading>
+            <SectionHeading>Tree Relationships</SectionHeading>
           </div>
+          <RelationDropdown label="Mate(s)"    selected={mates}   onAdd={(id) => setMates((p) => [...p, id])}   onRemove={(id) => setMates((p) => p.filter((x) => x !== id))}   allCats={cats} selfId={catId} />
+          <RelationDropdown label="Ex-Mate(s)" selected={exMates} onAdd={(id) => setExMates((p) => [...p, id])} onRemove={(id) => setExMates((p) => p.filter((x) => x !== id))} allCats={cats} selfId={catId} />
+          <RelationDropdown label="Parent(s)"  selected={parents} onAdd={(id) => setParents((p) => [...p, id])} onRemove={(id) => setParents((p) => p.filter((x) => x !== id))} allCats={cats} selfId={catId} />
+          <RelationDropdown label="Kit(s)"     selected={kits}    onAdd={(id) => setKits((p) => [...p, id])}    onRemove={(id) => setKits((p) => p.filter((x) => x !== id))}    allCats={cats} selfId={catId} />
 
-          <RelationDropdown
-            label="Mate(s)"
-            selected={mates}
-            onAdd={(id) => setMates((p) => [...p, id])}
-            onRemove={(id) => setMates((p) => p.filter((x) => x !== id))}
-            allCats={cats}
-            selfId={catId}
-          />
-          <RelationDropdown
-            label="Ex-Mate(s)"
-            selected={exMates}
-            onAdd={(id) => setExMates((p) => [...p, id])}
-            onRemove={(id) => setExMates((p) => p.filter((x) => x !== id))}
-            allCats={cats}
-            selfId={catId}
-          />
-          <RelationDropdown
-            label="Parent(s)"
-            selected={parents}
-            onAdd={(id) => setParents((p) => [...p, id])}
-            onRemove={(id) => setParents((p) => p.filter((x) => x !== id))}
-            allCats={cats}
-            selfId={catId}
-          />
-          <RelationDropdown
-            label="Kit(s)"
-            selected={kits}
-            onAdd={(id) => setKits((p) => [...p, id])}
-            onRemove={(id) => setKits((p) => p.filter((x) => x !== id))}
-            allCats={cats}
-            selfId={catId}
-          />
+          {/* Other Roles (not drawn on tree) */}
+          <div style={{ marginTop: '28px', marginBottom: '4px' }}>
+            <SectionHeading>Other Roles</SectionHeading>
+          </div>
+          <RelationDropdown label="Mentor(s)"     selected={mentors}     onAdd={(id) => setMentors((p) => [...p, id])}     onRemove={(id) => setMentors((p) => p.filter((x) => x !== id))}     allCats={cats} selfId={catId} />
+          <RelationDropdown label="Apprentice(s)" selected={apprentices} onAdd={(id) => setApprentices((p) => [...p, id])} onRemove={(id) => setApprentices((p) => p.filter((x) => x !== id))} allCats={cats} selfId={catId} />
+          <RelationDropdown label="Successor(s)"  selected={successors}  onAdd={(id) => setSuccessors((p) => [...p, id])}  onRemove={(id) => setSuccessors((p) => p.filter((x) => x !== id))}  allCats={cats} selfId={catId} />
 
-          <Field
-            label="Relationship Notes"
-            value={relationshipNotes}
-            onChange={setRelationshipNotes}
-            placeholder="Any notes about relationships…"
-            multiline
-          />
+          <div style={{ marginTop: '28px', marginBottom: '4px' }}>
+            <SectionHeading>Notes</SectionHeading>
+          </div>
+          <Field label="Relationship Notes" value={relationshipNotes} onChange={setRelationshipNotes} placeholder="Any notes about relationships…" multiline />
 
           <div style={{ height: '24px' }} />
         </div>
 
         {/* Footer */}
         <div style={{
-          padding: '16px 24px',
-          borderTop: '1px solid #1f1f1f',
-          display: 'flex', gap: '10px', justifyContent: 'flex-end',
-          flexShrink: 0,
+          padding: '16px 24px', borderTop: '1px solid #1f1f1f',
+          display: 'flex', gap: '10px', justifyContent: 'flex-end', flexShrink: 0,
         }}>
           <button
             onClick={onClose}
             style={{
-              backgroundColor: BG, color: '#9ca3af',
-              border: '1px solid #333', borderRadius: '8px',
-              padding: '10px 22px', fontWeight: 600, fontSize: '13px',
-              cursor: 'pointer', fontFamily: 'inherit',
+              backgroundColor: BG, color: '#9ca3af', border: '1px solid #333',
+              borderRadius: '8px', padding: '10px 22px', fontWeight: 600,
+              fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#555')}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#333')}
@@ -527,11 +539,9 @@ export default function EditModal({ catId, cats, connections, onSave, onClose }:
           <button
             onClick={handleSave}
             style={{
-              backgroundColor: '#ffffff', color: '#111',
-              border: 'none', borderRadius: '8px',
-              padding: '10px 28px', fontWeight: 700, fontSize: '13px',
-              cursor: 'pointer', fontFamily: 'inherit',
-              transition: 'opacity 0.1s',
+              backgroundColor: '#ffffff', color: '#111', border: 'none',
+              borderRadius: '8px', padding: '10px 28px', fontWeight: 700,
+              fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.1s',
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}

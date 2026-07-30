@@ -4,12 +4,16 @@ export interface CatNode {
   x: number;
   y: number;
   image?: string;
+  gender?: string;           // "Tom", "She-Cat", or custom text
   allegiance?: string;
   rank?: string;
   birthSeason?: string;
   deathSeason?: string;
   description?: string;
   relationshipNotes?: string;
+  apprentices?: string[];    // IDs — not drawn as tree connections
+  mentors?: string[];        // IDs — not drawn as tree connections
+  successors?: string[];     // IDs — not drawn as tree connections
 }
 
 export type RelationType = 'parent' | 'kit' | 'mate' | 'ex-mate';

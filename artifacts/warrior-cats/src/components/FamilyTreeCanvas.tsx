@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { CatNode, Connection, RelationType, Transform, KitModal } from '../types';
 import EditModal from './EditModal';
 import KitParentModal from './KitParentModal';
+import ViewPanel from './ViewPanel';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -41,9 +42,16 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
   const dist = Math.hypot(x2 - x1, y2 - y1);
   if (dist < 2) return null;
   const ux = (x2 - x1) / dist, uy = (y2 - y1) / dist;
-  const GAP = 10;
-  const ax2 = mx - ux * GAP, ay2 = my - uy * GAP;
-  const bx1 = mx + ux * GAP, by1 = my + uy * GAP;
+
+  // Mate heart: icon spans ~±7px → GAP 10 leaves ~3px breathing room
+  const GAP  = 10;
+  const ax2  = mx - ux * GAP,  ay2  = my - uy * GAP;
+  const bx1  = mx + ux * GAP,  by1  = my + uy * GAP;
+
+  // Broken heart halves offset ±2px → icon spans ~±9px → use GAP 13 for same visual gap
+  const BGAP = 13;
+  const bax2 = mx - ux * BGAP, bay2 = my - uy * BGAP;
+  const bbx1 = mx + ux * BGAP, bby1 = my + uy * BGAP;
 
   if (conn.type === 'mate') {
     return (
@@ -59,8 +67,8 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
 
   return (
     <g>
-      <line x1={x1} y1={y1} x2={ax2} y2={ay2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
-      <line x1={bx1} y1={by1} x2={x2} y2={y2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={x1} y1={y1} x2={bax2} y2={bay2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={bbx1} y1={bby1} x2={x2} y2={y2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
       <g transform={`translate(${mx},${my})`}>
         <g transform="translate(-2,0)">
           <path d={BROKEN_LEFT}  fill="#991b1b" stroke="#7f1d1d" strokeWidth={0.5} />
@@ -196,6 +204,7 @@ export default function FamilyTreeCanvas() {
   const [transform,   setTransform]   = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const [kitModal,    setKitModal]    = useState<KitModal | null>(null);
   const [editCatId,   setEditCatId]   = useState<string | null>(null);
+  const [viewCatId,   setViewCatId]   = useState<string | null>(null);
   const [snapGrid,    setSnapGrid]    = useState<number>(0);
 
   const viewportRef    = useRef<HTMLDivElement>(null);
@@ -538,7 +547,7 @@ export default function FamilyTreeCanvas() {
                       </div>
                     )}
 
-                    <PopupBtn label="View" testId="popup-view" />
+                    <PopupBtn label="View" testId="popup-view" onClick={() => { setViewCatId(cat.id); setActivePopup(null); setAddMenuId(null); }} />
                     <PopupBtn
                       label="Edit"
                       testId="popup-edit"
@@ -603,6 +612,24 @@ export default function FamilyTreeCanvas() {
           onClose={() => setEditCatId(null)}
         />
       )}
+
+      {/* View panel */}
+      {viewCatId && (() => {
+        const viewCat = cats.find((c) => c.id === viewCatId);
+        if (!viewCat) return null;
+        return (
+          <ViewPanel
+            cat={viewCat}
+            cats={cats}
+            connections={connections}
+            onClose={() => setViewCatId(null)}
+            onEdit={() => { setEditCatId(viewCatId); setViewCatId(null); }}
+            onImageChange={(dataUrl) => {
+              setCats((prev) => prev.map((c) => c.id === viewCatId ? { ...c, image: dataUrl } : c));
+            }}
+          />
+        );
+      })()}
     </>
   );
 }
