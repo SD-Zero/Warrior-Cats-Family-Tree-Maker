@@ -205,7 +205,7 @@ export default function FamilyTreeCanvas() {
   const [kitModal,    setKitModal]    = useState<KitModal | null>(null);
   const [editCatId,   setEditCatId]   = useState<string | null>(null);
   const [viewCatId,   setViewCatId]   = useState<string | null>(null);
-  const [snapGrid,    setSnapGrid]    = useState<number>(0);
+  const [snapGrid,    setSnapGrid]    = useState<number>(25);
 
   const viewportRef    = useRef<HTMLDivElement>(null);
   const transformRef   = useRef(transform);
