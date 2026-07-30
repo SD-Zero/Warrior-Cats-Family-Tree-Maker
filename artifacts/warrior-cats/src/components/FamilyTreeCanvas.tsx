@@ -19,17 +19,23 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 4;
 const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 
-// Full heart, tip pointing DOWN, centered at (0,0)
+// ─── Heart SVG paths (tip always pointing DOWN, centered at 0,0) ──────────────
+// Full heart
 const HEART_PATH =
   'M 0,-4 C 0,-4 -1.3,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 1.3,-7 0,-4 0,-4 Z';
 
-// Broken heart halves — crack line: 0,-4 → 1.5,-1 → -1,1 → 1.5,4 → 0,6
-// Left half (crack forms right edge)
+// Broken heart — crack line: (0,-4) → (2,0) → (-2,2) → (0,6)
+// Left half: right edge follows the crack
 const BROKEN_LEFT =
-  'M 0,-4 C -1.3,-7 -4.5,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 L 1.5,4 L -1,1 L 1.5,-1 Z';
-// Right half (crack forms left edge)
+  'M 0,-4 C -1.3,-7 -4.5,-7 -4.5,-7 C -7,-7 -7,-4 -7,-4 C -7,-1.5 -4,2 0,6 L -2,2 L 2,0 Z';
+// Right half: left edge follows the crack
 const BROKEN_RIGHT =
-  'M 0,-4 L 1.5,-1 L -1,1 L 1.5,4 L 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 4.5,-7 1.3,-7 0,-4 Z';
+  'M 0,-4 L 2,0 L -2,2 L 0,6 C 4,2 7,-1.5 7,-4 C 7,-4 7,-7 4.5,-7 C 4.5,-7 1.3,-7 0,-4 Z';
+
+// ─── Snap helper ─────────────────────────────────────────────────────────────
+function snapTo(val: number, grid: number) {
+  return grid > 0 ? Math.round(val / grid) * grid : val;
+}
 
 // ─── SVG Connection ───────────────────────────────────────────────────────────
 
@@ -41,14 +47,12 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
   const x1 = from.x, y1 = from.y;
   const x2 = to.x,   y2 = to.y;
 
-  // Parent / Kit: stepped orthogonal path
   if (conn.type === 'parent' || conn.type === 'kit') {
     const my = (y1 + y2) / 2;
     const d = `M ${x1},${y1} L ${x1},${my} L ${x2},${my} L ${x2},${y2}`;
     return <path d={d} stroke="#6b7280" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
   }
 
-  // Mate / Ex-Mate: straight line with heart at midpoint (heart never rotates)
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
   const dist = Math.hypot(x2 - x1, y2 - y1);
@@ -72,17 +76,18 @@ function ConnectionLine({ conn, cats }: { conn: Connection; cats: CatNode[] }) {
     );
   }
 
-  // ex-mate: broken heart (two halves shifted apart, no overlay)
+  // ex-mate: two halves pulled left/right symmetrically, both upright
   return (
     <g>
       <line x1={x1} y1={y1} x2={ax2} y2={ay2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
       <line x1={bx1} y1={by1} x2={x2} y2={y2} stroke="#b91c1c" strokeWidth={2.5} strokeLinecap="round" />
-      {/* Two half-paths slightly pulled apart, always upright */}
       <g transform={`translate(${mx},${my})`}>
-        <g transform="translate(-1.5,-1)">
+        {/* Left half: shift left */}
+        <g transform="translate(-2,0)">
           <path d={BROKEN_LEFT}  fill="#991b1b" stroke="#7f1d1d" strokeWidth={0.5} />
         </g>
-        <g transform="translate(1.5,1)">
+        {/* Right half: shift right */}
+        <g transform="translate(2,0)">
           <path d={BROKEN_RIGHT} fill="#991b1b" stroke="#7f1d1d" strokeWidth={0.5} />
         </g>
       </g>
@@ -149,38 +154,88 @@ function DownArrow() {
   );
 }
 
+// ─── Grid Snap Toggle ─────────────────────────────────────────────────────────
+
+const SNAP_OPTIONS: { label: string; value: number }[] = [
+  { label: 'Off',    value: 0   },
+  { label: 'Fine',   value: 50  },
+  { label: 'Medium', value: 100 },
+  { label: 'Coarse', value: 200 },
+];
+
+function SnapToggle({ snap, onChange }: { snap: number; onChange: (v: number) => void }) {
+  return (
+    <div
+      style={{
+        position: 'fixed', top: '20px', left: '20px', zIndex: 1000,
+        display: 'flex', flexDirection: 'column', gap: '6px',
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <div style={{
+        fontSize: '10px', fontWeight: 600, color: '#6b7280',
+        letterSpacing: '0.08em', textTransform: 'uppercase',
+        marginBottom: '2px', paddingLeft: '2px',
+      }}>
+        Snap Grid
+      </div>
+      {SNAP_OPTIONS.map((opt) => {
+        const active = snap === opt.value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            style={{
+              fontSize: '12px', fontWeight: active ? 700 : 500,
+              padding: '6px 14px',
+              backgroundColor: active ? '#ffffff' : 'rgba(255,255,255,0.07)',
+              color: active ? '#111' : '#9ca3af',
+              border: active ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.12s',
+              whiteSpace: 'nowrap',
+              minWidth: '80px',
+            }}
+          >
+            {opt.label}
+            {opt.value > 0 && (
+              <span style={{ opacity: 0.55, fontWeight: 400, marginLeft: 6, fontSize: '11px' }}>
+                {opt.value}px
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Kit Parent Modal ─────────────────────────────────────────────────────────
 
 function KitParentModal({
-  modal,
-  cats,
-  onLink,
-  onSkip,
+  modal, cats, onLink, onSkip,
 }: {
   modal: KitModal;
   cats: CatNode[];
   onLink: (partnerId: string) => void;
   onSkip: () => void;
 }) {
-  const self = cats.find((c) => c.id === modal.forCatId);
+  const self   = cats.find((c) => c.id === modal.forCatId);
   const newKit = cats.find((c) => c.id === modal.newKitId);
-  const hasMate    = modal.mates.length > 0;
-  const hasExMate  = modal.exMates.length > 0;
+  const hasMate   = modal.mates.length > 0;
+  const hasExMate = modal.exMates.length > 0;
 
-  let title = '';
-  if (hasMate && hasExMate)  title = 'Add kit to mate or ex-mate?';
-  else if (hasMate)          title = 'Add kit to mate?';
-  else                       title = 'Add kit to ex-mate?';
-
-  let linkQuestion = '';
-  if (hasMate && hasExMate)  linkQuestion = `Should `;
-  else                       linkQuestion = `Should `;
-
-  const selfName = self?.name ?? 'Unknown';
+  const selfName = self?.name   ?? 'Unknown';
   const kitName  = newKit?.name ?? 'Unknown';
 
-  // Build the question fragments for the "Should X also be linked to Y?" line
-  const partnerNames: string[] = [
+  let title = '';
+  if (hasMate && hasExMate) title = 'Add kit to mate or ex-mate?';
+  else if (hasMate)         title = 'Add kit to mate?';
+  else                      title = 'Add kit to ex-mate?';
+
+  const partnerNames = [
     ...modal.mates.map((m) => m.name),
     ...modal.exMates.map((m) => m.name),
   ];
@@ -188,47 +243,68 @@ function KitParentModal({
     ? `${partnerNames[0]} or ${partnerNames[1]}`
     : partnerNames[0] ?? '';
 
+  const BG = '#111111';
+
   return (
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 2000,
-        backgroundColor: 'rgba(0,0,0,0.72)',
+        backgroundColor: 'rgba(0,0,0,0.82)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div style={{
-        backgroundColor: '#1a1a1a',
-        border: '1px solid #333',
-        borderRadius: '16px',
-        padding: '32px 36px',
-        maxWidth: '420px',
+        backgroundColor: BG,
+        border: '1px solid #2a2a2a',
+        borderRadius: '12px',
+        padding: '36px 44px 40px 44px',
+        maxWidth: '560px',
         width: '90%',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.8)',
+        boxShadow: '0 12px 60px rgba(0,0,0,0.9)',
         color: '#e5e7eb',
         fontFamily: 'inherit',
+        position: 'relative',
       }}>
+        {/* X close button */}
+        <button
+          onClick={onSkip}
+          style={{
+            position: 'absolute', top: '16px', right: '16px',
+            background: 'none', border: 'none',
+            color: '#6b7280', fontSize: '20px', lineHeight: 1,
+            cursor: 'pointer', padding: '4px 8px',
+            borderRadius: '6px',
+            transition: 'color 0.1s',
+          }}
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#e5e7eb')}
+          onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#6b7280')}
+          title="Keep only one parent"
+        >
+          ✕
+        </button>
+
         {/* Title */}
-        <p style={{ margin: '0 0 18px 0', fontSize: '17px', fontWeight: 700, color: '#f3f4f6' }}>
+        <p style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 700, color: '#f3f4f6', paddingRight: '32px' }}>
           {title}
         </p>
 
         {/* "(Kit) was added as a child to (Self)." */}
-        <p style={{ margin: '0 0 10px 0', fontSize: '14px', lineHeight: 1.6, color: '#d1d5db' }}>
+        <p style={{ margin: '0 0 12px 0', fontSize: '14px', lineHeight: 1.7, color: '#9ca3af' }}>
           <b style={{ color: '#f9fafb' }}>{kitName}</b>
           {' was added as a child to '}
           <b style={{ color: '#f9fafb' }}>{selfName}</b>.
         </p>
 
         {/* "Should (Kit) also be linked to (Partner(s))?" */}
-        <p style={{ margin: '0 0 24px 0', fontSize: '14px', lineHeight: 1.6, color: '#d1d5db' }}>
+        <p style={{ margin: '0 0 28px 0', fontSize: '14px', lineHeight: 1.7, color: '#9ca3af' }}>
           {'Should '}
           <b style={{ color: '#f9fafb' }}>{kitName}</b>
           {' also be linked to '}
           <b style={{ color: '#f9fafb' }}>{partnerDisplay}</b>?
         </p>
 
-        {/* White "Yes" buttons (one per mate/ex-mate) */}
+        {/* Yes buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {modal.mates.map((m) => (
             <button
@@ -237,10 +313,12 @@ function KitParentModal({
               style={{
                 backgroundColor: '#ffffff', color: '#111',
                 fontWeight: 600, fontSize: '14px',
-                border: 'none', borderRadius: '10px',
-                padding: '12px 20px', cursor: 'pointer',
-                textAlign: 'center',
+                border: 'none', borderRadius: '8px',
+                padding: '13px 20px', cursor: 'pointer',
+                textAlign: 'center', transition: 'opacity 0.1s',
               }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
             >
               Yes, link to <b>{m.name}</b>
             </button>
@@ -252,25 +330,30 @@ function KitParentModal({
               style={{
                 backgroundColor: '#ffffff', color: '#111',
                 fontWeight: 600, fontSize: '14px',
-                border: 'none', borderRadius: '10px',
-                padding: '12px 20px', cursor: 'pointer',
-                textAlign: 'center',
+                border: 'none', borderRadius: '8px',
+                padding: '13px 20px', cursor: 'pointer',
+                textAlign: 'center', transition: 'opacity 0.1s',
               }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = '1')}
             >
               Yes, link to <b>{m.name}</b>
             </button>
           ))}
 
-          {/* Dark "No" button */}
+          {/* No button — same background as modal */}
           <button
             onClick={onSkip}
             style={{
-              backgroundColor: '#2d2d2d', color: '#e5e7eb',
+              backgroundColor: BG, color: '#e5e7eb',
               fontWeight: 600, fontSize: '14px',
-              border: '1px solid #444', borderRadius: '10px',
-              padding: '12px 20px', cursor: 'pointer',
-              textAlign: 'center', marginTop: '4px',
+              border: '1px solid #333', borderRadius: '8px',
+              padding: '13px 20px', cursor: 'pointer',
+              textAlign: 'center', marginTop: '6px',
+              transition: 'border-color 0.1s',
             }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#555')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#333')}
           >
             No, keep only one parent
           </button>
@@ -289,6 +372,7 @@ export default function FamilyTreeCanvas() {
   const [addMenuId,   setAddMenuId]   = useState<string | null>(null);
   const [transform,   setTransform]   = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const [kitModal,    setKitModal]    = useState<KitModal | null>(null);
+  const [snapGrid,    setSnapGrid]    = useState<number>(0);
 
   const viewportRef  = useRef<HTMLDivElement>(null);
   const nodeRefs     = useRef<Record<string, HTMLDivElement | null>>({});
@@ -298,6 +382,8 @@ export default function FamilyTreeCanvas() {
   catsRef.current = cats;
   const connectionsRef = useRef(connections);
   connectionsRef.current = connections;
+  const snapGridRef = useRef(snapGrid);
+  snapGridRef.current = snapGrid;
 
   const catDrag = useRef<{
     id: string | null;
@@ -378,7 +464,7 @@ export default function FamilyTreeCanvas() {
 
   const onTouchEnd = useCallback(() => { pinchState.current.active = false; }, []);
 
-  // ── Node drag — live state updates so SVG lines track in real time ──────────
+  // ── Node drag — live state updates + snap ───────────────────────────────────
   const onNodeDown = useCallback((e: React.PointerEvent, cat: CatNode) => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -392,9 +478,11 @@ export default function FamilyTreeCanvas() {
     const dx = (e.clientX - startClientX) / scale;
     const dy = (e.clientY - startClientY) / scale;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) catDrag.current.moved = true;
-    // Update cats state live so both the node and SVG lines stay in sync
+    const grid = snapGridRef.current;
+    const nx = snapTo(nodeStartX + dx, grid);
+    const ny = snapTo(nodeStartY + dy, grid);
     setCats((prev) =>
-      prev.map((c) => c.id === id ? { ...c, x: nodeStartX + dx, y: nodeStartY + dy } : c)
+      prev.map((c) => c.id === id ? { ...c, x: nx, y: ny } : c)
     );
   }, []);
 
@@ -450,11 +538,13 @@ export default function FamilyTreeCanvas() {
     setActivePopup(null);
     setAddMenuId(null);
 
-    // If adding a kit, check for mates/ex-mates and prompt
     if (type === 'kit') {
       const conns = connectionsRef.current;
       const partnerIds = conns
-        .filter((cn) => (cn.fromId === fromCatId || cn.toId === fromCatId) && (cn.type === 'mate' || cn.type === 'ex-mate'))
+        .filter((cn) =>
+          (cn.fromId === fromCatId || cn.toId === fromCatId) &&
+          (cn.type === 'mate' || cn.type === 'ex-mate')
+        )
         .map((cn) => ({ partnerId: cn.fromId === fromCatId ? cn.toId : cn.fromId, relType: cn.type }));
 
       const allCats = catsRef.current;
@@ -463,7 +553,7 @@ export default function FamilyTreeCanvas() {
       for (const { partnerId, relType } of partnerIds) {
         const node = allCats.find((c) => c.id === partnerId);
         if (!node) continue;
-        if (relType === 'mate')     mates.push(node);
+        if (relType === 'mate')    mates.push(node);
         if (relType === 'ex-mate') exMates.push(node);
       }
 
@@ -473,7 +563,7 @@ export default function FamilyTreeCanvas() {
     }
   }, []);
 
-  // ── Kit modal: link kit to a partner ────────────────────────────────────────
+  // ── Kit modal ───────────────────────────────────────────────────────────────
   const handleKitLink = useCallback((partnerId: string) => {
     if (!kitModal) return;
     setConnections((prev) => [
@@ -532,7 +622,7 @@ export default function FamilyTreeCanvas() {
           transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           willChange: 'transform',
         }}>
-          {/* Connection lines — re-render live as cats move */}
+          {/* Connection lines */}
           <svg style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible', pointerEvents: 'none', zIndex: 1 }}>
             {connections.map((conn) => (
               <ConnectionLine key={conn.id} conn={conn} cats={cats} />
@@ -567,7 +657,6 @@ export default function FamilyTreeCanvas() {
             >
               {cat.name}
 
-              {/* Main horizontal popup */}
               {activePopup === cat.id && (
                 <div
                   className="cat-popup"
@@ -585,7 +674,6 @@ export default function FamilyTreeCanvas() {
                 >
                   <DownArrow />
 
-                  {/* Vertical Add sub-menu */}
                   {addMenuId === cat.id && (
                     <div
                       onPointerDown={(e) => e.stopPropagation()}
@@ -632,6 +720,9 @@ export default function FamilyTreeCanvas() {
           ))}
         </div>
 
+        {/* Snap grid toggle */}
+        <SnapToggle snap={snapGrid} onChange={setSnapGrid} />
+
         {/* Add Cat button */}
         <button
           data-testid="button-add-cat"
@@ -649,7 +740,7 @@ export default function FamilyTreeCanvas() {
         </button>
       </div>
 
-      {/* Kit parent modal — rendered outside canvas so it's not clipped */}
+      {/* Kit parent modal */}
       {kitModal && (
         <KitParentModal
           modal={kitModal}
