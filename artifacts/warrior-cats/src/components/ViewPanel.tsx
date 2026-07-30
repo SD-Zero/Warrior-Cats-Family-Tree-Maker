@@ -157,8 +157,8 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
 
   const summaryLines = generateSummary(cat, cats, connections);
 
-  // Role line: allegiance · rank (gender shown separately)
-  const roleLabel = [cat.allegiance, cat.rank].filter(Boolean).join(' · ');
+  // Role line: rank only (gender + allegiance shown as separate pills)
+  const roleLabel = cat.rank ?? '';
 
   return (
     <div
@@ -176,6 +176,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 20px', height: '44px',
+        backgroundColor: '#000',
         borderBottom: '1px solid #1f1f1f', flexShrink: 0,
       }}>
         <span style={{ fontSize: '10px', fontWeight: 700, color: '#848484', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
@@ -214,13 +215,15 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
       <div style={{ overflowY: 'auto', flex: 1 }}>
 
         {/* Photo area */}
-        <div style={{ position: 'relative', height: '240px', backgroundColor: '#080808', flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: '240px', backgroundColor: '#1c1c1c', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {cat.image ? (
-            <img
-              src={cat.image}
-              alt={cat.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+            <div style={{ width: '180px', height: '180px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+              <img
+                src={cat.image}
+                alt={cat.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
           ) : (
             /* Big centered placeholder circle */
             <div style={{
@@ -264,18 +267,30 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#f5f5f5', margin: 0, lineHeight: 1.2 }}>
             {cat.name}
           </h1>
-          {cat.gender && (
-            <span style={{
-              display: 'inline-block', marginTop: '8px',
-              backgroundColor: '#1a1a1a', color: '#ababab',
-              border: '1px solid #2a2a2a', borderRadius: '6px',
-              padding: '3px 10px', fontSize: '12px', fontWeight: 600,
-            }}>
-              {cat.gender}
-            </span>
+          {(cat.gender || cat.allegiance) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+              {cat.gender && (
+                <span style={{
+                  backgroundColor: '#1a1a1a', color: '#ababab',
+                  border: '1px solid #2a2a2a', borderRadius: '6px',
+                  padding: '3px 10px', fontSize: '12px', fontWeight: 600,
+                }}>
+                  {cat.gender}
+                </span>
+              )}
+              {cat.allegiance && (
+                <span style={{
+                  backgroundColor: '#1a1a1a', color: '#ababab',
+                  border: '1px solid #2a2a2a', borderRadius: '6px',
+                  padding: '3px 10px', fontSize: '12px', fontWeight: 600,
+                }}>
+                  {cat.allegiance}
+                </span>
+              )}
+            </div>
           )}
           {roleLabel && (
-            <p style={{ fontSize: '13px', color: '#ababab', marginTop: cat.gender ? '6px' : '6px', marginBottom: 0 }}>
+            <p style={{ fontSize: '13px', color: '#ababab', marginTop: '6px', marginBottom: 0 }}>
               {roleLabel}
             </p>
           )}
