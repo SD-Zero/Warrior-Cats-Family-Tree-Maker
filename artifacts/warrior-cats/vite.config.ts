@@ -47,6 +47,10 @@ export default defineConfig({
         ]
       : []),
   ],
+  // Expose SUPABASE_* secrets to the client via import.meta.env.
+  // Replit: secrets named SUPABASE_URL / SUPABASE_ANON_KEY are exposed automatically.
+  // GitHub Pages CI: use VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in Actions secrets.
+  envPrefix: ['VITE_', 'SUPABASE_'],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),

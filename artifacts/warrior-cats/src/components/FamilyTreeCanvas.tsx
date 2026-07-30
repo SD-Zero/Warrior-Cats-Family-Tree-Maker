@@ -3,6 +3,8 @@ import { CatNode, Connection, RelationType, Transform, KitModal } from '../types
 import EditModal from './EditModal';
 import KitParentModal from './KitParentModal';
 import ViewPanel from './ViewPanel';
+import ShareModal from './ShareModal';
+import { supabaseEnabled } from '../lib/supabase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -206,6 +208,7 @@ export default function FamilyTreeCanvas() {
   const [editCatId,   setEditCatId]   = useState<string | null>(null);
   const [viewCatId,   setViewCatId]   = useState<string | null>(null);
   const [snapGrid,    setSnapGrid]    = useState<number>(25);
+  const [shareOpen,   setShareOpen]   = useState(false);
 
   const viewportRef    = useRef<HTMLDivElement>(null);
   const transformRef   = useRef(transform);
@@ -216,6 +219,20 @@ export default function FamilyTreeCanvas() {
   connectionsRef.current = connections;
   const snapGridRef = useRef(snapGrid);
   snapGridRef.current = snapGrid;
+
+  // ── Import from shared tree (set by SharedTreeView when unlocking) ───────────
+  useEffect(() => {
+    const raw = localStorage.getItem('warrior-cats-import');
+    if (!raw) return;
+    try {
+      const { cats: importedCats, connections: importedConns } = JSON.parse(raw) as {
+        cats: CatNode[]; connections: Connection[];
+      };
+      setCats(importedCats);
+      setConnections(importedConns);
+    } catch { /* ignore malformed data */ }
+    localStorage.removeItem('warrior-cats-import');
+  }, []);
 
   const catDrag = useRef<{
     id: string | null;
@@ -575,6 +592,26 @@ export default function FamilyTreeCanvas() {
         {/* Snap grid toggle */}
         <SnapToggle snap={snapGrid} onChange={setSnapGrid} />
 
+        {/* Share button */}
+        {supabaseEnabled && (
+          <button
+            onClick={() => setShareOpen(true)}
+            style={{
+              position: 'fixed', bottom: '28px', right: '216px',
+              backgroundColor: 'rgba(255,255,255,0.08)', color: '#e5e7eb',
+              fontWeight: 600, fontSize: '14px',
+              borderRadius: '12px', padding: '13px 28px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+              border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', zIndex: 1000,
+              transition: 'background 0.12s, border-color 0.12s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.22)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
+          >
+            Share
+          </button>
+        )}
+
         {/* Add Cat button */}
         <button
           data-testid="button-add-cat"
@@ -610,6 +647,15 @@ export default function FamilyTreeCanvas() {
           connections={connections}
           onSave={handleEditSave}
           onClose={() => setEditCatId(null)}
+        />
+      )}
+
+      {/* Share modal */}
+      {shareOpen && (
+        <ShareModal
+          cats={cats}
+          connections={connections}
+          onClose={() => setShareOpen(false)}
         />
       )}
 

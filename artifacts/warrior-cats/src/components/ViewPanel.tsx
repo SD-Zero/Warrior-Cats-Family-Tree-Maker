@@ -132,9 +132,10 @@ interface Props {
   onClose: () => void;
   onEdit: () => void;
   onImageChange: (dataUrl: string) => void;
+  readOnly?: boolean;
 }
 
-export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onImageChange }: Props) {
+export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onImageChange, readOnly }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,6 +183,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           Character
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
+          {!readOnly && (
           <button
             onClick={onEdit}
             style={{
@@ -195,6 +197,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
           >
             Edit
           </button>
+          )}
           <button
             onClick={onClose}
             style={{
