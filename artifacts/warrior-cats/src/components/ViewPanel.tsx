@@ -214,7 +214,7 @@ export default function ViewPanel({ cat, cats, connections, onClose, onEdit, onI
       <div style={{ overflowY: 'auto', flex: 1 }}>
 
         {/* Photo area */}
-        <div style={{ position: 'relative', height: '240px', backgroundColor: '#1c1c1c', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', height: '240px', backgroundColor: '#0f0f0f', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {cat.image ? (
             <div style={{ width: '180px', height: '180px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
               <img
