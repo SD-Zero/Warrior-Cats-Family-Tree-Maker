@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CatNode, Connection } from '../types';
 import { saveTree } from '../lib/shareTree';
-import { supabaseEnabled } from '../lib/supabase';
+import { supabaseEnabled, supabaseDiag } from '../lib/supabase';
 
 interface Props {
   cats: CatNode[];
@@ -56,7 +56,7 @@ export default function ShareModal({ cats, connections, onClose }: Props) {
     } catch (e) {
       console.error('saveTree error:', e);
       const msg = e instanceof Error ? e.message : (e as {message?: string})?.message ?? JSON.stringify(e);
-      setError(msg || 'Failed to save tree. Try again.');
+      setError((msg || 'Failed to save tree.') + ` [${supabaseDiag}]`);
     } finally {
       setLoading(false);
     }

@@ -7,3 +7,6 @@ const key = (import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_
 
 export const supabaseEnabled = Boolean(url && key);
 export const supabase = supabaseEnabled ? createClient(url, key) : null;
+
+// Diagnostic: safe to show (no secrets), helps trace config issues
+export const supabaseDiag = `url=${url ? url.replace(/^https?:\/\/([^.]+).*/, '$1…') : 'MISSING'} key=${key ? key.slice(0, 6) + '…' : 'MISSING'}`;
