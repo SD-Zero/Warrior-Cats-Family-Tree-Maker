@@ -30,13 +30,23 @@ export async function saveTree(
   if (!supabase) throw new Error('Supabase not configured');
   const id             = genId();
   const edit_code_hash = editCode ? await hashCode(editCode) : null;
-  const { error }      = await supabase.from('trees').insert({
-    id,
-    data: { cats, connections },
-    edit_code_hash,
-    title: title.trim() || null,
-  });
-  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let result: any;
+  try {
+    result = await supabase.from('trees').insert({
+      id,
+      data: { cats, connections },
+      edit_code_hash,
+      title: title.trim() || null,
+    });
+  } catch (fetchErr) {
+    console.error('Supabase fetch failed:', fetchErr);
+    throw new Error(`Network error reaching Supabase: ${(fetchErr as Error).message}`);
+  }
+  if (result.error) {
+    console.error('Supabase insert error:', result.error);
+    throw new Error(result.error.message || JSON.stringify(result.error));
+  }
   return id;
 }
 
