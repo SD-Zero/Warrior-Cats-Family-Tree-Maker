@@ -54,7 +54,9 @@ export default function ShareModal({ cats, connections, onClose }: Props) {
       const url = window.location.origin + window.location.pathname + '#/tree/' + id;
       setShareUrl(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save tree. Try again.');
+      console.error('saveTree error:', e);
+      const msg = e instanceof Error ? e.message : (e as {message?: string})?.message ?? JSON.stringify(e);
+      setError(msg || 'Failed to save tree. Try again.');
     } finally {
       setLoading(false);
     }
